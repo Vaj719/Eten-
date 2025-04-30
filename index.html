@@ -2,98 +2,52 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>موقع سبام</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            padding: 50px;
-        }
-        h1 {
-            color: #333;
-        }
-        .container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-        }
-        input, select, button {
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 200px;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
+        body { font-family: Arial; text-align: center; background: #f0f0f0; padding: 40px; }
+        .container { background: #fff; padding: 20px; border-radius: 10px; display: inline-block; }
+        input, select, button { margin: 10px; padding: 10px; width: 200px; }
+        button { background: green; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>مرحبًا بكم في موقع سبام</h1>
-        <input type="text" id="phone" placeholder="أدخل رقم الهاتف">
-        <input type="number" id="count" placeholder="عدد المرات (1-50)">
+        <h1>موقع سبام</h1>
+        <input type="text" id="phone" placeholder="رقم الهاتف"><br>
+        <input type="number" id="count" placeholder="عدد الإرسال"><br>
         <select id="type">
-            <option value="ethir">سبام اثير</option>
-            <option value="asia">سبام اسيا</option>
-        </select>
-        <button id="startBtn" onclick="startSpam()">بدء الإرسال</button>
-        <button id="stopBtn" onclick="stopSpam()" disabled>إيقاف الإرسال</button>
+            <option value="ethir">سبام أثير</option>
+            <option value="asia">سبام آسيا</option>
+        </select><br>
+        <button onclick="startSpam()">بدء الإرسال</button>
+        <button onclick="stopSpam()">إيقاف الإرسال</button>
         <p id="status"></p>
     </div>
 
     <script>
+        const apiUrl = "https://d834d8b1-1d8d-4905-8881-c00735775054-00-2jvq64f057t4i.pike.replit.dev/";  // غيّره إلى رابط السيرفر إن لزم
+
         async function startSpam() {
             const phone = document.getElementById('phone').value;
             const count = document.getElementById('count').value;
             const type = document.getElementById('type').value;
-            
-            if (!phone || !count || count < 1 || count > 50) {
-                alert("يرجى إدخال رقم هاتف صحيح وعدد مرات بين 1 و 50.");
-                return;
-            }
 
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
             document.getElementById('status').innerText = "جاري الإرسال...";
 
-            const response = await fetch('/start_spam', {
+            const res = await fetch(`${apiUrl}/start_spam`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ phone, count, type }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, count, type })
             });
 
-            const result = await response.json();
-            document.getElementById('status').innerText = result.message;
+            const data = await res.json();
+            document.getElementById('status').innerText = data.message;
         }
 
         async function stopSpam() {
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('status').innerText = "جاري الإيقاف...";
-
-            const response = await fetch('/stop_spam', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-            document.getElementById('status').innerText = result.message;
+            const res = await fetch(`${apiUrl}/stop_spam`, { method: 'POST' });
+            const data = await res.json();
+            document.getElementById('status').innerText = data.message;
         }
     </script>
 </body>
