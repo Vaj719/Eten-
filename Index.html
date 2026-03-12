@@ -1,110 +1,3 @@
-<?php
-$message = "";
-$status = "";
-
-$limit_file = 'limits.json';
-$cooldown_seconds = 24 * 60 * 60; 
-$user_ip = $_SERVER['REMOTE_ADDR']; 
-
-$limits = [];
-if (file_exists($limit_file)) {
-    $limits = json_decode(file_get_contents($limit_file), true) ?: [];
-}
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $service = filter_input(INPUT_POST, 'service', FILTER_SANITIZE_STRING);
-    $target_url = filter_input(INPUT_POST, 'target_url', FILTER_SANITIZE_URL);
-    
-    if (empty($service)) {
-        $status = "error";
-        $message = "يرجى اختيار خدمة من البطاقات أعلاه.";
-    } else {
-        $last_used = isset($limits[$user_ip][$service]) ? $limits[$user_ip][$service] : 0;
-        $time_passed = time() - $last_used;
-
-        if ($time_passed < $cooldown_seconds) {
-            $remaining_seconds = $cooldown_seconds - $time_passed;
-            $hours = floor($remaining_seconds / 3600);
-            $minutes = floor(($remaining_seconds % 3600) / 60);
-            
-            $status = "error";
-            $message = "عذراً، لقد استخدمت هذه الخدمة. يرجى الانتظار <b>$hours ساعة و $minutes دقيقة</b>.";
-        } else {
-            // التوكنات الوهمية (استبدلها بحسابك الحقيقي)
-            $token = "FAKETOKEN";
-            $cookie = "cf_clearance=FAKECOOKIE; token=FAKETOKEN";
-            $user_agent = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36";
-
-            $api_url = "";
-            $data = [];
-            $referer = "";
-
-            switch ($service) {
-                case "1":
-                    $api_url = "https://leofame.com/free-youtube-likes?api=1";
-                    $referer = "https://leofame.com/free-youtube-likes";
-                    $data = ["token" => $token, "timezone_offset" => "Asia/Baghdad", "free_link" => $target_url];
-                    break;
-                case "2":
-                    $api_url = "https://leofame.com/free-tiktok-likes?api=1";
-                    $referer = "https://leofame.com/free-tiktok-likes";
-                    $data = ["token" => $token, "timezone_offset" => "Asia/Baghdad", "free_link" => $target_url];
-                    break;
-                case "3":
-                    $api_url = "https://leofame.com/free-instagram-saves?api=1";
-                    $referer = "https://leofame.com/free-instagram-saves";
-                    $data = ["token" => $token, "timezone_offset" => "Asia/Baghdad", "free_link" => $target_url, "quantity" => "30", "speed" => "-1"];
-                    break;
-                case "4":
-                    $api_url = "https://leofame.com/ar/free-tiktok-views?api=1";
-                    $referer = "https://leofame.com/ar/free-tiktok-views";
-                    $data = ["token" => $token, "timezone_offset" => "Asia/Baghdad", "free_link" => $target_url, "quantity" => "200"];
-                    break;
-            }
-
-            if (!empty($api_url)) {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $api_url);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                
-                $headers = [
-                    "Host: leofame.com",
-                    "sec-ch-ua-platform: \"Android\"",
-                    "sec-ch-ua-mobile: ?1",
-                    "User-Agent: " . $user_agent,
-                    "Content-Type: application/x-www-form-urlencoded",
-                    "Origin: https://leofame.com",
-                    "Referer: " . $referer,
-                    "Cookie: " . $cookie
-                ];
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-                $response = curl_exec($ch);
-                $error = curl_error($ch);
-                curl_close($ch);
-
-                if ($error) {
-                    $status = "error";
-                    $message = "حدث خطأ في الاتصال بالخادم.";
-                } elseif (strpos($response, 'Please wait') !== false || strpos($response, '"error":') !== false) {
-                    $status = "error";
-                    $message = "حدث خطأ من المصدر، تأكد من الرابط أو التوكن.";
-                } else {
-                    $status = "success";
-                    $message = "تم إرسال الرشق بنجاح! جاري التنفيذ.";
-                    
-                    $limits[$user_ip][$service] = time();
-                    file_put_contents($limit_file, json_encode($limits));
-                }
-            }
-        }
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -115,8 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            /* تعديل الألوان لتكون أسود داكن مع أزرق نيون */
-            --bg-gradient: linear-gradient(135deg, #050505 0%, #0d0e15 100%);
+            var(--bg-gradient): linear-gradient(135deg, #050505 0%, #0d0e15 100%);
             --blue-primary: #00d2ff;
             --blue-hover: #0072ff;
             --glass-bg: rgba(15, 15, 20, 0.85);
@@ -133,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background: var(--bg-gradient);
+            background: linear-gradient(135deg, #050505 0%, #0d0e15 100%);
             color: var(--text-light);
             min-height: 100vh;
             display: flex;
@@ -157,7 +49,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             overflow: hidden;
         }
 
-        /* تأثير إضاءة خفيفة في زاوية المربع */
         .vip-container::before {
             content: '';
             position: absolute;
@@ -194,7 +85,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             text-transform: uppercase;
         }
 
-        /* تصميم شبكة الخدمات (Cards) */
         .services-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -234,7 +124,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: all 0.3s ease;
         }
 
-        /* تأثيرات عند اختيار الخدمة (أزرق) */
         .service-option input[type="radio"]:checked + .service-card {
             background: rgba(0, 210, 255, 0.08);
             border-color: var(--blue-primary);
@@ -253,7 +142,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background: rgba(255, 255, 255, 0.02);
         }
 
-        /* حقل الإدخال */
         .input-group {
             position: relative;
             margin-bottom: 30px;
@@ -286,7 +174,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
         }
 
-        /* زر الإرسال مع الإضاءة الزرقاء (Glow) */
         .submit-btn {
             width: 100%;
             padding: 18px;
@@ -300,7 +187,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            /* الإضاءة الزرقاء خلف الزر */
             box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
             position: relative;
             overflow: hidden;
@@ -313,23 +199,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            /* زيادة التوهج عند تمرير الماوس */
             box-shadow: 0 0 35px rgba(0, 210, 255, 0.8);
             filter: brightness(1.1);
         }
 
-        /* رسائل التنبيه */
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .alert {
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 20px;
             font-size: 14px;
             font-weight: 700;
-            display: <?php echo empty($message) ? 'none' : 'block'; ?>;
+            display: none;
             animation: fadeIn 0.5s ease;
         }
 
         .alert.success {
+            display: block;
             background: rgba(46, 204, 113, 0.1);
             border: 1px solid #2ecc71;
             color: #2ecc71;
@@ -337,6 +227,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .alert.error {
+            display: block;
             background: rgba(231, 76, 60, 0.1);
             border: 1px solid #e74c3c;
             color: #e74c3c;
@@ -348,7 +239,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* تجاوب الشاشات الصغيرة */
         @media (max-width: 400px) {
             .services-grid {
                 grid-template-columns: 1fr;
@@ -364,12 +254,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <p><i class="fa-solid fa-bolt"></i>خدمات رشق</p>
     </div>
     
-    <div class="alert <?php echo $status; ?>">
-        <?php echo $message; ?>
-    </div>
+    <div id="alertBox" class="alert"></div>
 
-    <form method="POST" action="">
-        
+    <form id="rashaqForm">
         <div class="services-grid">
             <label class="service-option">
                 <input type="radio" name="service" value="1" required>
@@ -406,12 +293,116 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <div class="input-group">
             <i class="fa-solid fa-link"></i>
-            <input type="url" name="target_url" placeholder="قم بلصق الرابط هنا..." required>
+            <input type="url" id="target_url" placeholder="قم بلصق الرابط هنا..." required>
         </div>
 
-        <button type="submit" class="submit-btn"><i class="fa-solid fa-rocket"></i> إرسـال الرشـق</button>
+        <button type="submit" class="submit-btn" id="submitBtn"><i class="fa-solid fa-rocket"></i> إرسـال الرشـق</button>
     </form>
 </div>
 
+<script>
+    document.getElementById('rashaqForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const alertBox = document.getElementById('alertBox');
+        const submitBtn = document.getElementById('submitBtn');
+        const serviceOptions = document.getElementsByName('service');
+        const targetUrl = document.getElementById('target_url').value;
+        
+        let selectedService = null;
+        for (let option of serviceOptions) {
+            if (option.checked) {
+                selectedService = option.value;
+                break;
+            }
+        }
+
+        // دالة إظهار التنبيهات
+        const showAlert = (type, message) => {
+            alertBox.className = `alert ${type}`;
+            alertBox.innerHTML = message;
+        };
+
+        if (!selectedService) {
+            showAlert('error', 'يرجى اختيار خدمة من البطاقات أعلاه.');
+            return;
+        }
+
+        // نظام التخزين المحلي (التبريد 24 ساعة)
+        const cooldownSeconds = 24 * 60 * 60;
+        const storageKey = `cooldown_service_${selectedService}`;
+        const lastUsed = localStorage.getItem(storageKey) || 0;
+        const currentTime = Math.floor(Date.now() / 1000);
+        const timePassed = currentTime - lastUsed;
+
+        if (timePassed < cooldownSeconds) {
+            const remainingSeconds = cooldownSeconds - timePassed;
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            
+            showAlert('error', `عذراً، لقد استخدمت هذه الخدمة. يرجى الانتظار <b>${hours} ساعة و ${minutes} دقيقة</b>.`);
+            return;
+        }
+
+        // إعدادات الـ API
+        const token = "FAKETOKEN"; // ضع التوكن الخاص بك هنا
+        let apiUrl = "";
+        let requestData = new URLSearchParams();
+        
+        requestData.append("token", token);
+        requestData.append("timezone_offset", "Asia/Baghdad");
+        requestData.append("free_link", targetUrl);
+
+        switch (selectedService) {
+            case "1":
+                apiUrl = "https://leofame.com/free-youtube-likes?api=1";
+                break;
+            case "2":
+                apiUrl = "https://leofame.com/free-tiktok-likes?api=1";
+                break;
+            case "3":
+                apiUrl = "https://leofame.com/free-instagram-saves?api=1";
+                requestData.append("quantity", "30");
+                requestData.append("speed", "-1");
+                break;
+            case "4":
+                apiUrl = "https://leofame.com/ar/free-tiktok-views?api=1";
+                requestData.append("quantity", "200");
+                break;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+
+        try {
+            // ملاحظة: قد تفشل هذه الخطوة بسبب الـ CORS من الخادم الهدف. المتصفحات تمنع إرسال Headers معينة (مثل Cookie) عبر Fetch لأسباب أمنية.
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: requestData.toString()
+            });
+
+            const responseText = await response.text();
+
+            if (responseText.includes('Please wait') || responseText.includes('"error":')) {
+                showAlert('error', "حدث خطأ من المصدر، تأكد من الرابط أو التوكن.");
+            } else {
+                showAlert('success', "تم إرسال الرشق بنجاح! جاري التنفيذ.");
+                // حفظ وقت الاستخدام في المتصفح
+                localStorage.setItem(storageKey, currentTime);
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            showAlert('error', "حدث خطأ في الاتصال بالخادم. (قد يكون بسبب حماية CORS من الموقع المصدر).");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> إرسـال الرشـق';
+        }
+    });
+</script>
+
 </body>
 </html>
+
