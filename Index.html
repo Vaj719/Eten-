@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            var(--bg-gradient): linear-gradient(135deg, #050505 0%, #0d0e15 100%);
             --blue-primary: #00d2ff;
             --blue-hover: #0072ff;
             --glass-bg: rgba(15, 15, 20, 0.85);
@@ -75,14 +74,12 @@
             color: transparent;
             letter-spacing: 4px;
             margin-bottom: 5px;
-            text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
         }
 
         .logo-area p {
             color: var(--blue-primary);
             font-size: 14px;
             letter-spacing: 2px;
-            text-transform: uppercase;
         }
 
         .services-grid {
@@ -121,7 +118,6 @@
             font-size: 14px;
             font-weight: 700;
             color: var(--text-muted);
-            transition: all 0.3s ease;
         }
 
         .service-option input[type="radio"]:checked + .service-card {
@@ -134,12 +130,6 @@
         .service-option input[type="radio"]:checked + .service-card i,
         .service-option input[type="radio"]:checked + .service-card span {
             color: var(--blue-primary);
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
-        }
-
-        .service-card:hover {
-            border-color: rgba(0, 210, 255, 0.3);
-            background: rgba(255, 255, 255, 0.02);
         }
 
         .input-group {
@@ -171,7 +161,6 @@
         .input-group input:focus {
             outline: none;
             border-color: var(--blue-primary);
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
         }
 
         .submit-btn {
@@ -186,21 +175,6 @@
             font-family: 'Tajawal', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .submit-btn i {
-            margin-left: 8px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 35px rgba(0, 210, 255, 0.8);
-            filter: brightness(1.1);
         }
 
         .submit-btn:disabled {
@@ -215,7 +189,6 @@
             font-size: 14px;
             font-weight: 700;
             display: none;
-            animation: fadeIn 0.5s ease;
         }
 
         .alert.success {
@@ -223,7 +196,6 @@
             background: rgba(46, 204, 113, 0.1);
             border: 1px solid #2ecc71;
             color: #2ecc71;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
         }
 
         .alert.error {
@@ -231,18 +203,6 @@
             background: rgba(231, 76, 60, 0.1);
             border: 1px solid #e74c3c;
             color: #e74c3c;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 400px) {
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -317,18 +277,16 @@
             }
         }
 
-        // دالة إظهار التنبيهات
         const showAlert = (type, message) => {
             alertBox.className = `alert ${type}`;
             alertBox.innerHTML = message;
         };
 
         if (!selectedService) {
-            showAlert('error', 'يرجى اختيار خدمة من البطاقات أعلاه.');
+            showAlert('error', 'يرجى اختيار خدمة.');
             return;
         }
 
-        // نظام التخزين المحلي (التبريد 24 ساعة)
         const cooldownSeconds = 24 * 60 * 60;
         const storageKey = `cooldown_service_${selectedService}`;
         const lastUsed = localStorage.getItem(storageKey) || 0;
@@ -339,13 +297,12 @@
             const remainingSeconds = cooldownSeconds - timePassed;
             const hours = Math.floor(remainingSeconds / 3600);
             const minutes = Math.floor((remainingSeconds % 3600) / 60);
-            
-            showAlert('error', `عذراً، لقد استخدمت هذه الخدمة. يرجى الانتظار <b>${hours} ساعة و ${minutes} دقيقة</b>.`);
+            showAlert('error', `لقد استخدمت هذه الخدمة. يرجى الانتظار ${hours} ساعة و ${minutes} دقيقة.`);
             return;
         }
 
-        // إعدادات الـ API
-        const token = "FAKETOKEN"; // ضع التوكن الخاص بك هنا
+        // التوكن الخاص بك
+        const token = "FAKETOKEN"; 
         let apiUrl = "";
         let requestData = new URLSearchParams();
         
@@ -375,11 +332,14 @@
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
 
         try {
-            // ملاحظة: قد تفشل هذه الخطوة بسبب الـ CORS من الخادم الهدف. المتصفحات تمنع إرسال Headers معينة (مثل Cookie) عبر Fetch لأسباب أمنية.
-            const response = await fetch(apiUrl, {
+            // استخدام CORS Proxy لتخطي حظر المتصفح
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiUrl);
+            
+            const response = await fetch(proxyUrl, {
                 method: 'POST',
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    // ملاحظة: المتصفحات تمنع إرسال Cookie عبر الجافاسكربت مباشرة
                 },
                 body: requestData.toString()
             });
@@ -390,12 +350,11 @@
                 showAlert('error', "حدث خطأ من المصدر، تأكد من الرابط أو التوكن.");
             } else {
                 showAlert('success', "تم إرسال الرشق بنجاح! جاري التنفيذ.");
-                // حفظ وقت الاستخدام في المتصفح
                 localStorage.setItem(storageKey, currentTime);
             }
         } catch (error) {
-            console.error("Fetch Error:", error);
-            showAlert('error', "حدث خطأ في الاتصال بالخادم. (قد يكون بسبب حماية CORS من الموقع المصدر).");
+            console.error("Error:", error);
+            showAlert('error', "حدث خطأ، الموقع المصدر قد يكون حظر البروكسي المجاني.");
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> إرسـال الرشـق';
